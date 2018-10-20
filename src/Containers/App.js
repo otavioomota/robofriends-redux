@@ -1,32 +1,41 @@
 import React, { Component } from 'react';
+import { connect }  from 'react-redux';
 
 import CardList from '../Components/CardList/CardList';
 import SearchBox from '../Components/SearchBox/SearchBox';
 import Scroll from '../Components/Scroll/Scroll';
-import './App.css';
 
+import './App.css';
 import 'tachyons';
+
+import { setSearchField, requestRobots  } from '../actions';
+
+const mapStateToProps = state => {
+  return {
+    searchField: state.searchRobots.searchField,
+    isPedding: state.requestRobots.isPedding,
+    robots: state.requestRobots.robots,
+    error: state.requestRobots.error
+  }
+}
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    onSearchChange: (event) => dispatch(setSearchField(event.target.value)),
+    onRequestRobots: () => dispatch(requestRobots())
+  }
+}
 
 class App extends Component {
   constructor(){
     super()
     this.state = {
-      robots:[],
-      searchField:"",
       checked:false
     }
   }
 
   componentDidMount(){
-    fetch('https://jsonplaceholder.typicode.com/users')
-      .then(response => response.json())
-      .then( users => this.setState({ robots: users}))
-  }
-
-  ChangeField = (event) => {
-    this.setState({
-      searchField:event.target.value
-    })
+    this.props.onRequestRobots()
   }
 
   AlphabeticOrder = () => {
@@ -49,25 +58,27 @@ class App extends Component {
     return comparison;
   }
   render(){
-    const { robots, searchField, checked } = this.state;
+
+    const { checked } = this.state;
+    const { searchField, onSearchChange, isPedding, robots } = this.props;
+
     const filteredRobots = robots.filter( robot => {
       return robot.name.toLowerCase().includes(searchField.toLowerCase())
       || robot.email.toLowerCase().includes(searchField.toLowerCase())
     })
-    console.log(filteredRobots)
 
     checked
     ? (filteredRobots.sort(this.Compare))
     : console.log(checked)
 
-    return (!robots.length)
+    return (isPedding)
     ? <h1>Loading ... </h1>
     : (
         <div className="tc">
           <div className="bg">
             <h1>Robot Friends</h1>
             <SearchBox
-              ChangeField={this.ChangeField}
+              onSearchChange={onSearchChange}
               AlphabeticOrder={this.AlphabeticOrder}
              />
           </div>
@@ -80,4 +91,4 @@ class App extends Component {
   }
 }
 
-export default App;
+export default connect(mapStateToProps,mapDispatchToProps)(App);
